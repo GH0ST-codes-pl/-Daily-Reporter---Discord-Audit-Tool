@@ -122,6 +122,27 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Inteligentne wprowadzanie:** Automatycznie wyciąga ID kanału/wiadomości z wklejonych linków.
 *   **Kolorowe CLI:** Profesjonalny i czytelny interfejs terminala.
 *   **Zoptymalizowana prędkość:** Skonfigurowany tak, aby unikać szybkich blokad (Rate Limit / Error 429).
+*   **Scrapowanie Użytkownika:** Automatycznie pobiera i zgłasza *wszystkie* ostatnie wiadomości wybranego użytkownika.
+*   **Obsługa Wielu Tokenów:** Rotacja wieloma kontami dla maksymalnej efektywności.
+*   **Obsługa Proxy:** Zintegrowana rotacja proxy HTTP/HTTPS, aby zapobiec blokadom IP.
+*   **Logowanie:** Szczegółowe zapisywanie sukcesów i błędów do pliku `logs.txt`.
+
+### ⚙️ Konfiguracja
+
+1.  **Tokeny (`tokens.txt`)**:
+    Stwórz plik o nazwie `tokens.txt` w folderze bota. Wklej swoje tokeny Discord, jeden pod drugim.
+    ```text
+    OTkw...
+    MTIz...
+    ```
+    *Jeśli plik `tokens.txt` nie istnieje, bot poprosi o pojedynczy token.*
+
+2.  **Proxy (`proxies.txt`)**:
+    Stwórz plik o nazwie `proxies.txt`. Dodaj proxy (http/https), jedno pod drugim.
+    ```text
+    http://user:pass@ip:port
+    ip:port
+    ```
 
 ### 📥 Instalacja i Użycie
 
