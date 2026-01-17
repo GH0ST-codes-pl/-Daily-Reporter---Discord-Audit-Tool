@@ -6,18 +6,53 @@ import time
 import requests
 
 
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    RESET = '\033[0m'
 class Main:
     def __init__(self):
-        self.GUILD_ID = input('[>] Guild ID: ')
-        self.CHANNEL_ID = input('[>] Channel ID: ')
-        self.MESSAGE_ID = input('[>] Message ID: ')
+        self.sent = 0
+        self.errors = 0
+        self.GUILD_ID = None
+        self.CHANNEL_ID = None
+        self.MESSAGE_ID = None
+        self.REASON = None
+        self.TOKEN = None
+        self.RESPONSES = {
+            '401: Unauthorized': f'{Colors.RED}[!] Invalid Discord token.{Colors.RESET}',
+            'Missing Access': f'{Colors.RED}[!] Missing access to channel or guild.{Colors.RESET}',
+            'You need to verify your account in order to perform this action.': f'{Colors.RED}[!] Unverified.{Colors.RESET}'
+        }
+
+    def _extract_id(self, text):
+        # Removes surrounding whitespace and handles URLs by taking the last segment
+        text = text.strip()
+        if not text.isdigit():
+            # Try to grab the last numeric component if it's a URL-like string
+            parts = text.split('/')
+            for part in reversed(parts):
+                if part.isdigit():
+                    return part
+        return text
+
+    def get_inputs(self):
+        self.GUILD_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Guild ID: '))
+        self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
+        self.MESSAGE_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Message ID: '))
+        
         REASON = input(
-            '\n[1] Illegal content\n'
-            '[2] Harassment\n'
-            '[3] Spam or phishing links\n'
-            '[4] Self-harm\n'
-            '[5] NSFW content\n\n'
-            '[>] Reason: '
+            f'\n{Colors.BLUE}[1]{Colors.RESET} Illegal content\n'
+            f'{Colors.BLUE}[2]{Colors.RESET} Harassment\n'
+            f'{Colors.BLUE}[3]{Colors.RESET} Spam or phishing links\n'
+            f'{Colors.BLUE}[4]{Colors.RESET} Self-harm\n'
+            f'{Colors.BLUE}[5]{Colors.RESET} NSFW content\n\n'
+            f'{Colors.CYAN}[>]{Colors.RESET} Reason: '
         )
 
         if REASON.upper() in ('1', 'ILLEGAL CONTENT'):
@@ -31,22 +66,10 @@ class Main:
         elif REASON.upper() in ('5', 'NSFW CONTENT'):
             self.REASON = 4
         else:
-            print('\n[!] Reason invalid.')
-            os.system(
-                'title [Discord Reporter] - Restart required &&'
-                'pause >NUL &&'
-                'title [Discord Reporter] - Exiting...'
-            )
-            time.sleep(3)
+            print(f'\n{Colors.RED}[!] Reason invalid.{Colors.RESET}')
+            print(f'{Colors.RED}[Discord Reporter] - Restart required{Colors.RESET}')
+            input("Press Enter to exit...")
             os._exit(0)
-
-        self.RESPONSES = {
-            '401: Unauthorized': '[!] Invalid Discord token.',
-            'Missing Access': '[!] Missing access to channel or guild.',
-            'You need to verify your account in order to perform this action.': '[!] Unverified.'
-        }
-        self.sent = 0
-        self.errors = 0
 
     def _reporter(self):
         report = requests.post(
@@ -66,24 +89,25 @@ class Main:
         )
         if (status := report.status_code) == 201:
             self.sent += 1
-            print('[!] Reported successfully.')
+            print(f'{Colors.GREEN}[!] Reported successfully.{Colors.RESET}')
         elif status in (401, 403):
             self.errors += 1
             print(self.RESPONSES[report.json()['message']])
         else:
             self.errors += 1
-            print(f'[!] Error: {report.text} | Status Code: {status}')
+            print(f'{Colors.RED}[!] Error: {report.text} | Status Code: {status}{Colors.RESET}')
 
-    def _update_title(self):
+    def _update_status(self):
         while True:
-            os.system(f'title [Discord Reporter] - Sent: {self.sent} ^| Errors: {self.errors}')
-            time.sleep(0.1)
+            print(f'\r{Colors.YELLOW}[Discord Reporter]{Colors.RESET} - Sent: {Colors.GREEN}{self.sent}{Colors.RESET} | Errors: {Colors.RED}{self.errors}{Colors.RESET}    ', end='', flush=True)
+            time.sleep(0.5)
 
     def _multi_threading(self):
-        threading.Thread(target=self._update_title).start()
+        threading.Thread(target=self._update_status, daemon=True).start()
         while True:
-            if threading.active_count() <= 300:
+            if threading.active_count() <= 5:
                 threading.Thread(target=self._reporter).start()
+                time.sleep(2)
 
     def setup(self):
         recognized = None
@@ -100,7 +124,7 @@ class Main:
             recognized = False
 
         if not recognized:
-            self.TOKEN = input('[>] Discord token: ')
+            self.TOKEN = input(f'{Colors.CYAN}[>]{Colors.RESET} Discord token: ')
             with open(config_json, 'w') as f:
                 json.dump({'discordToken': self.TOKEN}, f)
         print()
@@ -108,6 +132,18 @@ class Main:
 
 
 if __name__ == '__main__':
-    os.system('cls && title [Discord Reporter] - Main Menu')
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f'{Colors.RED}')
+    print(r"""
+  ____        _ _                               _            
+ |  _ \  __ _(_) |_   _       _ __ ___ _ __   ___  _ __| |_ ___ _ __ 
+ | | | |/ _` | | | | | |_____| '__/ _ \ '_ \ / _ \| '__| __/ _ \ '__|
+ | |_| | (_| | | | |_| |_____| | |  __/ |_) | (_) | |  | ||  __/ |   
+ |____/ \__,_|_|_|\__, |     |_|  \___| .__/ \___/|_|   \__\___|_|   
+                  |___/               |_|                            
+    """)
+    print(f'          {Colors.WHITE}Created by GH0ST{Colors.RESET}')
+    print(f'       {Colors.MAGENTA}[Discord Reporter] - Main Menu{Colors.RESET}\n')
     main = Main()
+    main.get_inputs()
     main.setup()
