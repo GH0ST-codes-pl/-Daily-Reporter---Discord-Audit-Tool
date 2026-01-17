@@ -29,7 +29,28 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Smart Input:** Automatically extracts Channel/Message IDs from pasted URLs.
 *   **Colorful CLI:** Professional and easy-to-read interface.
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
-*   **Proxy Support:** (Planned feature)
+*   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
+*   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
+*   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
+*   **Logging:** Detailed logging of success and errors to `logs.txt`.
+
+### ⚙️ Configuration
+
+1.  **Tokens (`tokens.txt`)**:
+    Create a file named `tokens.txt` in the bot folder. Add your Discord tokens, one per line.
+    ```text
+    OTkw...
+    MTIz...
+    ```
+    *If `tokens.txt` is missing, the bot will ask for a single token.*
+
+2.  **Proxies (`proxies.txt`)**:
+    Create a file named `proxies.txt`. Add proxies (http/https), one per line.
+    ```text
+    http://user:pass@ip:port
+    ip:port
+    ```
+
 
 ### 📥 Installation & Usage
 

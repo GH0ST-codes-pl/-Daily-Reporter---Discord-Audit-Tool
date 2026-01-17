@@ -1,3 +1,5 @@
 Config.json
+tokens.txt
+proxies.txt
 __pycache__/
 *.pyc
