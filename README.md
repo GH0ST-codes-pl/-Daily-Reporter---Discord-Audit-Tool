@@ -35,6 +35,8 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
 *   **Logging:** Detailed logging of success and errors to `logs.txt`.
 
+![User Scraper In Action](scraper_preview.png)
+
 ### ⚙️ Configuration
 
 1.  **Tokens (`tokens.txt`)**:
