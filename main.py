@@ -227,6 +227,17 @@ class Main:
 
 if __name__ == '__main__':
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(f'{Colors.RED}Daily Reporter - Advanced{Colors.RESET}')
+    print(f'{Colors.RED}')
+    print(r"""
+  ____        _ _                               _            
+ |  _ \  __ _(_) |_   _       _ __ ___ _ __   ___  _ __| |_ ___ _ __ 
+ | | | |/ _` | | | | | |_____| '__/ _ \ '_ \ / _ \| '__| __/ _ \ '__|
+ | |_| | (_| | | | |_| |_____| | |  __/ |_) | (_) | |  | ||  __/ |   
+ |____/ \__,_|_|_|\__, |     |_|  \___| .__/ \___/|_|   \__\___|_|   
+                  |___/               |_|                            
+    """)
+    print(f'          {Colors.WHITE}Created by GH0ST{Colors.RESET}')
+    print(f'       {Colors.MAGENTA} "testowane na zwierzętach"{Colors.RESET}')
+    print(f'       {Colors.MAGENTA}[Discord Reporter] - Advanced{Colors.RESET}\n')
     app = Main()
     app.start()
