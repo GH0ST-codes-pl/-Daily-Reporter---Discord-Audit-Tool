@@ -4,6 +4,8 @@
 ![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Termux-green?style=for-the-badge)
 
+![Preview](preview.png)
+
 **Daily Reporter** is an advanced, lightweight Discord reporting tool designed for educational and testing purposes. It features a sleek, colorful CLI, automatic ID extraction from URLs, and multi-threaded reporting capabilities.
 
 **Created by GH0ST**
