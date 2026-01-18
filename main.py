@@ -188,7 +188,7 @@ class Main:
         return {'http': f'http://{p}', 'https': f'http://{p}'} if not p.startswith('http') else {'http': p, 'https': p}
 
     def _guild_reporter(self, token):
-        """Report entire guild/server"""
+        """Report guild owner (server owner's profile)"""
         headers = {
             'Accept': '*/*',
             'Accept-Encoding': 'gzip, deflate',
@@ -198,10 +198,34 @@ class Main:
             'Authorization': token
         }
 
+        # First, get guild info to find owner
+        owner_id = None
+        try:
+            r = requests.get(
+                f'https://discord.com/api/v9/guilds/{self.GUILD_ID}',
+                headers=headers
+            )
+            if r.status_code == 200:
+                guild_data = r.json()
+                owner_id = guild_data.get('owner_id')
+                print(f'{Colors.GREEN}[+] Found guild owner: {owner_id}{Colors.RESET}')
+            else:
+                print(f'{Colors.RED}[!] Failed to fetch guild info: {r.status_code}{Colors.RESET}')
+                return
+        except Exception as e:
+            print(f'{Colors.RED}[!] Error fetching guild: {e}{Colors.RESET}')
+            return
+
+        if not owner_id:
+            print(f'{Colors.RED}[!] Could not find guild owner{Colors.RESET}')
+            return
+
+        # Now report the owner's profile repeatedly
         while self.running:
             try:
                 payload = {
                     'guild_id': self.GUILD_ID,
+                    'user_id': owner_id,
                     'reason': self.REASON
                 }
                 
@@ -213,7 +237,7 @@ class Main:
                 
                 if r.status_code == 201:
                     self.sent += 1
-                    logging.info(f'Reported guild {self.GUILD_ID} token={token[:5]}...')
+                    logging.info(f'Reported guild owner {owner_id} in guild {self.GUILD_ID} token={token[:5]}...')
                 elif r.status_code == 429:
                     wait = r.json().get('retry_after', 2)
                     logging.warning(f'Rate Limit: {wait}s')
@@ -224,13 +248,13 @@ class Main:
                     return  # Kill thread
                 else:
                     self.errors += 1
-                    logging.error(f'Guild report fail {r.status_code}: {r.text}')
+                    logging.error(f'Guild owner report fail {r.status_code}: {r.text}')
 
                 time.sleep(random.uniform(1.0, 2.0))  # Delay between reports
                 
             except Exception as e:
                 self.errors += 1
-                logging.error(f'Guild report error: {e}')
+                logging.error(f'Guild owner report error: {e}')
                 time.sleep(2)
 
     def _reporter(self, token):

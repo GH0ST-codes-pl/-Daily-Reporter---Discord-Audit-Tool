@@ -30,7 +30,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Colorful CLI:** Professional and easy-to-read interface.
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
 *   **User Scraping:** Automatically fetch and report up to 1000+ messages from a target user using smart pagination.
-*   **Guild Reporting:** Mass-report entire servers/guilds with dedicated reporting mode.
+*   **Guild Reporting:** Mass-report server owners by automatically detecting and reporting the guild owner's profile.
 *   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
 *   **Logging:** Detailed logging of success and errors to `logs.txt`.
@@ -123,7 +123,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Kolorowe CLI:** Profesjonalny i czytelny interfejs terminala.
 *   **Zoptymalizowana prędkość:** Skonfigurowany tak, aby unikać szybkich blokad (Rate Limit / Error 429).
 *   **Scrapowanie Użytkownika:** Automatycznie pobiera i zgłasza do 1000+ wiadomości wybranego użytkownika dzięki inteligentnej paginacji.
-*   **Zgłaszanie Serwerów:** Masowe zgłaszanie całych serwerów/gildii w dedykowanym trybie.
+*   **Zgłaszanie Serwerów:** Masowe zgłaszanie właścicieli serwerów poprzez automatyczne wykrywanie i zgłaszanie profilu właściciela gildii.
 *   **Obsługa Wielu Tokenów:** Rotacja wieloma kontami dla maksymalnej efektywności.
 *   **Obsługa Proxy:** Zintegrowana rotacja proxy HTTP/HTTPS, aby zapobiec blokadom IP.
 *   **Logowanie:** Szczegółowe zapisywanie sukcesów i błędów do pliku `logs.txt`.
