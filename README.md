@@ -29,7 +29,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Smart Input:** Automatically extracts Channel/Message IDs from pasted URLs.
 *   **Colorful CLI:** Professional and easy-to-read interface.
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
-*   **User Scraping:** Automatically fetch and report up to 1000+ messages from a target user using smart pagination.
+*   **User Scraping:** Automatically fetch and report up to 10000+ messages from a target user using smart pagination. Scan single channel or all server channels.
 *   **Guild Reporting:** Mass-report server owners by automatically detecting and reporting the guild owner's profile.
 *   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.

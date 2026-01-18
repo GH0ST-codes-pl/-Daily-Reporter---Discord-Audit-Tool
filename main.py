@@ -88,13 +88,29 @@ class Main:
             self.mode = 'single'
             self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
             msg_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Message ID: '))
-            self.TARGETS.append(msg_id)
+            self.TARGETS.append({'message_id': msg_id, 'channel_id': self.CHANNEL_ID})
         elif mode == '2':
             self.mode = 'user'
-            self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
             user_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Target User ID: '))
-            amount = int(input(f'{Colors.CYAN}[>]{Colors.RESET} Messages to scan (e.g. 100): '))
-            self._scrape_messages(user_id, amount)
+            keyword = input(f'{Colors.CYAN}[>]{Colors.RESET} Filter by keyword (press Enter to skip): ').strip()
+            if not keyword: keyword = None
+            
+            print(f'\n{Colors.MAGENTA}Scraping Mode:{Colors.RESET}')
+            print(f'{Colors.BLUE}[1]{Colors.RESET} Scan Single Channel')
+            print(f'{Colors.BLUE}[2]{Colors.RESET} Scan All Server Channels')
+            scrape_mode = input(f'{Colors.CYAN}[>]{Colors.RESET} Choice: ')
+            
+            if scrape_mode == '1':
+                self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
+                amount = int(input(f'{Colors.CYAN}[>]{Colors.RESET} Messages to scan (e.g. 10000): '))
+                self._scrape_messages(user_id, amount, keyword)
+            elif scrape_mode == '2':
+                self.CHANNEL_ID = None
+                amount = int(input(f'{Colors.CYAN}[>]{Colors.RESET} Messages per channel (e.g. 5000): '))
+                self._scrape_all_channels(user_id, amount, keyword)
+            else:
+                print(f'{Colors.RED}[!] Invalid scraping mode.{Colors.RESET}')
+                os._exit(0)
         elif mode == '3':
             self.mode = 'guild'
             self.CHANNEL_ID = None  # Not needed for guild reports
@@ -129,7 +145,7 @@ class Main:
             mapping = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
             self.REASON = mapping.get(REASON, 1) # Default to Harassment
 
-    def _scrape_messages(self, user_id, limit):
+    def _scrape_messages(self, user_id, limit, keyword=None):
         print(f'{Colors.YELLOW}[*] Scraping messages...{Colors.RESET}')
         headers = {'Authorization': self.tokens[0], 'Content-Type': 'application/json'}
         
@@ -170,7 +186,8 @@ class Main:
             count = 0
             for msg in all_messages:
                 if msg['author']['id'] == str(user_id):
-                    self.TARGETS.append(msg['id'])
+                    if keyword and keyword.lower() not in msg['content'].lower(): continue
+                    self.TARGETS.append({'message_id': msg['id'], 'channel_id': self.CHANNEL_ID})
                     count += 1
             
             print(f'{Colors.GREEN}[+] Found {count} messages from user in {fetched} total messages.{Colors.RESET}')
@@ -178,8 +195,102 @@ class Main:
                 print(f'{Colors.RED}[!] No messages found from this user in the last {fetched} messages.{Colors.RESET}')
                 os._exit(0)
                 
+        except KeyboardInterrupt:
+            print(f'\n{Colors.RED}[!] Scrape stopped by user.{Colors.RESET}')
+            os._exit(0)
         except Exception as e:
             print(f'{Colors.RED}[!] Scrape error: {e}{Colors.RESET}')
+            os._exit(0)
+
+    def _scrape_all_channels(self, user_id, limit_per_channel, keyword=None):
+        """Scrape messages from user across ALL channels in the guild"""
+        print(f'{Colors.YELLOW}[*] Fetching all channels in guild...{Colors.RESET}')
+        headers = {'Authorization': self.tokens[0], 'Content-Type': 'application/json'}
+        
+        try:
+            # Get all channels in the guild
+            r = requests.get(
+                f'https://discord.com/api/v9/guilds/{self.GUILD_ID}/channels',
+                headers=headers
+            )
+            
+            if r.status_code != 200:
+                print(f'{Colors.RED}[!] Failed to fetch channels: {r.status_code} {r.text}{Colors.RESET}')
+                os._exit(0)
+            
+            channels = r.json()
+            # Filter only text channels (type 0) and announcement channels (type 5)
+            text_channels = [ch for ch in channels if ch.get('type') in [0, 5]]
+            
+            print(f'{Colors.GREEN}[+] Found {len(text_channels)} text channels. Scanning...{Colors.RESET}')
+            
+            total_found = 0
+            for idx, channel in enumerate(text_channels, 1):
+                channel_id = channel['id']
+                channel_name = channel.get('name', 'unknown')
+                
+                print(f'{Colors.CYAN}[{idx}/{len(text_channels)}]{Colors.RESET} Scanning #{channel_name}...')
+                
+                # Scrape this channel
+                all_messages = []
+                last_message_id = None
+                fetched = 0
+                
+                try:
+                    while fetched < limit_per_channel:
+                        batch_size = min(100, limit_per_channel - fetched)
+                        url = f'https://discord.com/api/v9/channels/{channel_id}/messages?limit={batch_size}'
+                        if last_message_id:
+                            url += f'&before={last_message_id}'
+                        
+                        r = requests.get(url, headers=headers)
+                        
+                        if r.status_code == 200:
+                            messages = r.json()
+                            if not messages:
+                                break
+                            
+                            all_messages.extend(messages)
+                            fetched += len(messages)
+                            last_message_id = messages[-1]['id']
+                            time.sleep(0.3)
+                        elif r.status_code == 429:
+                            wait = r.json().get('retry_after', 2)
+                            print(f'{Colors.YELLOW}[*] Rate limited, waiting {wait}s...{Colors.RESET}')
+                            time.sleep(float(wait))
+                        elif r.status_code == 403:
+                            print(f'{Colors.YELLOW}[!] No access to #{channel_name}, skipping...{Colors.RESET}')
+                            break
+                        else:
+                            break
+                    
+                    # Filter messages from target user in this channel
+                    channel_count = 0
+                    for msg in all_messages:
+                        if msg['author']['id'] == str(user_id):
+                            if keyword and keyword.lower() not in msg['content'].lower(): continue
+                            self.TARGETS.append({'message_id': msg['id'], 'channel_id': channel_id})
+                            channel_count += 1
+                            total_found += 1
+                    
+                    if channel_count > 0:
+                        print(f'{Colors.GREEN}  └─ Found {channel_count} messages from user{Colors.RESET}')
+                    
+                except KeyboardInterrupt:
+                    print(f'\n{Colors.RED}[!] Scrape stopped by user.{Colors.RESET}')
+                    os._exit(0)
+                except Exception as e:
+                    print(f'{Colors.YELLOW}[!] Error scanning #{channel_name}: {e}{Colors.RESET}')
+                    continue
+            
+            print(f'{Colors.GREEN}[+] Total: Found {total_found} messages from user across {len(text_channels)} channels.{Colors.RESET}')
+            
+            if total_found == 0:
+                print(f'{Colors.RED}[!] No messages found from this user in any channel.{Colors.RESET}')
+                os._exit(0)
+                
+        except Exception as e:
+            print(f'{Colors.RED}[!] Error fetching channels: {e}{Colors.RESET}')
             os._exit(0)
 
     def _get_proxy(self):
@@ -271,13 +382,13 @@ class Main:
         # If Single Mode: Loop target infinitely
         
         while self.running:
-            for msg_id in self.TARGETS:
+            for target in self.TARGETS:
                 if not self.running: break
                 
                 try:
                     payload = {
-                        'channel_id': self.CHANNEL_ID,
-                        'message_id': msg_id,
+                        'channel_id': target['channel_id'],
+                        'message_id': target['message_id'],
                         'guild_id': self.GUILD_ID,
                         'reason': self.REASON
                     }
@@ -290,7 +401,7 @@ class Main:
                     
                     if r.status_code == 201:
                         self.sent += 1
-                        logging.info(f'Reported {msg_id} token={token[:5]}...')
+                        logging.info(f"Reported {target['message_id']} token={token[:5]}...")
                     elif r.status_code == 429:
                         wait = r.json().get('retry_after', 2)
                         logging.warning(f'Rate Limit: {wait}s')
