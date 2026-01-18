@@ -78,21 +78,27 @@ class Main:
         print(f'\n{Colors.MAGENTA}Select Mode:{Colors.RESET}')
         print(f'{Colors.BLUE}[1]{Colors.RESET} Spam Report Single Message')
         print(f'{Colors.BLUE}[2]{Colors.RESET} Report All Messages from User (Scrape)')
+        print(f'{Colors.BLUE}[3]{Colors.RESET} Report Entire Server/Guild')
         
         mode = input(f'{Colors.CYAN}[>]{Colors.RESET} Choice: ')
         
         self.GUILD_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Guild ID: '))
-        self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
         
         if mode == '1':
             self.mode = 'single'
+            self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
             msg_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Message ID: '))
             self.TARGETS.append(msg_id)
         elif mode == '2':
             self.mode = 'user'
+            self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
             user_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Target User ID: '))
             amount = int(input(f'{Colors.CYAN}[>]{Colors.RESET} Messages to scan (e.g. 100): '))
             self._scrape_messages(user_id, amount)
+        elif mode == '3':
+            self.mode = 'guild'
+            self.CHANNEL_ID = None  # Not needed for guild reports
+            print(f'{Colors.YELLOW}[*] Guild reporting mode selected.{Colors.RESET}')
         else:
             print(f'{Colors.RED}[!] Invalid mode.{Colors.RESET}')
             os._exit(0)
@@ -100,16 +106,28 @@ class Main:
         self._get_reason()
 
     def _get_reason(self):
-        print(f'\n{Colors.MAGENTA}Select Report Reason:{Colors.RESET}')
-        print(f'{Colors.BLUE}[1]{Colors.RESET} Illegal content')
-        print(f'{Colors.BLUE}[2]{Colors.RESET} Harassment')
-        print(f'{Colors.BLUE}[3]{Colors.RESET} Spam or phishing links')
-        print(f'{Colors.BLUE}[4]{Colors.RESET} Self-harm')
-        print(f'{Colors.BLUE}[5]{Colors.RESET} NSFW content')
-        
-        REASON = input(f'{Colors.CYAN}[>]{Colors.RESET} Reason: ')
-        mapping = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
-        self.REASON = mapping.get(REASON, 1) # Default to Harassment
+        if self.mode == 'guild':
+            print(f'\n{Colors.MAGENTA}Select Guild Report Reason:{Colors.RESET}')
+            print(f'{Colors.BLUE}[1]{Colors.RESET} Illegal content')
+            print(f'{Colors.BLUE}[2]{Colors.RESET} Harassment')
+            print(f'{Colors.BLUE}[3]{Colors.RESET} Spam or phishing')
+            print(f'{Colors.BLUE}[4]{Colors.RESET} Raid or brigading')
+            print(f'{Colors.BLUE}[5]{Colors.RESET} NSFW content')
+            
+            REASON = input(f'{Colors.CYAN}[>]{Colors.RESET} Reason: ')
+            mapping = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
+            self.REASON = mapping.get(REASON, 1)
+        else:
+            print(f'\n{Colors.MAGENTA}Select Report Reason:{Colors.RESET}')
+            print(f'{Colors.BLUE}[1]{Colors.RESET} Illegal content')
+            print(f'{Colors.BLUE}[2]{Colors.RESET} Harassment')
+            print(f'{Colors.BLUE}[3]{Colors.RESET} Spam or phishing links')
+            print(f'{Colors.BLUE}[4]{Colors.RESET} Self-harm')
+            print(f'{Colors.BLUE}[5]{Colors.RESET} NSFW content')
+            
+            REASON = input(f'{Colors.CYAN}[>]{Colors.RESET} Reason: ')
+            mapping = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
+            self.REASON = mapping.get(REASON, 1) # Default to Harassment
 
     def _scrape_messages(self, user_id, limit):
         print(f'{Colors.YELLOW}[*] Scraping messages...{Colors.RESET}')
@@ -168,6 +186,52 @@ class Main:
         if not self.proxies: return None
         p = random.choice(self.proxies)
         return {'http': f'http://{p}', 'https': f'http://{p}'} if not p.startswith('http') else {'http': p, 'https': p}
+
+    def _guild_reporter(self, token):
+        """Report entire guild/server"""
+        headers = {
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'en-US',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Content-Type': 'application/json',
+            'Authorization': token
+        }
+
+        while self.running:
+            try:
+                payload = {
+                    'guild_id': self.GUILD_ID,
+                    'reason': self.REASON
+                }
+                
+                proxies = self._get_proxy()
+                r = requests.post(
+                    'https://discordapp.com/api/v9/report',
+                    json=payload, headers=headers, proxies=proxies, timeout=10
+                )
+                
+                if r.status_code == 201:
+                    self.sent += 1
+                    logging.info(f'Reported guild {self.GUILD_ID} token={token[:5]}...')
+                elif r.status_code == 429:
+                    wait = r.json().get('retry_after', 2)
+                    logging.warning(f'Rate Limit: {wait}s')
+                    time.sleep(float(wait))
+                    continue  # Retry after waiting
+                elif r.status_code in [401, 403]:
+                    print(f'{Colors.RED}[!] Token invalid/forbidden {r.status_code}{Colors.RESET}')
+                    return  # Kill thread
+                else:
+                    self.errors += 1
+                    logging.error(f'Guild report fail {r.status_code}: {r.text}')
+
+                time.sleep(random.uniform(1.0, 2.0))  # Delay between reports
+                
+            except Exception as e:
+                self.errors += 1
+                logging.error(f'Guild report error: {e}')
+                time.sleep(2)
 
     def _reporter(self, token):
         headers = {
@@ -235,7 +299,10 @@ class Main:
         
         threads = []
         for token in self.tokens:
-            t = threading.Thread(target=self._reporter, args=(token,))
+            if self.mode == 'guild':
+                t = threading.Thread(target=self._guild_reporter, args=(token,))
+            else:
+                t = threading.Thread(target=self._reporter, args=(token,))
             t.daemon = True
             t.start()
             threads.append(t)
