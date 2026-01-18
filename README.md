@@ -29,7 +29,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Smart Input:** Automatically extracts Channel/Message IDs from pasted URLs.
 *   **Colorful CLI:** Professional and easy-to-read interface.
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
-*   **User Scraping:** Automatically fetch and report *all* recent messages from a target user.
+*   **User Scraping:** Automatically fetch and report up to 1000+ messages from a target user using smart pagination.
 *   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
 *   **Logging:** Detailed logging of success and errors to `logs.txt`.
@@ -121,7 +121,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Inteligentne wprowadzanie:** Automatycznie wyciąga ID kanału/wiadomości z wklejonych linków.
 *   **Kolorowe CLI:** Profesjonalny i czytelny interfejs terminala.
 *   **Zoptymalizowana prędkość:** Skonfigurowany tak, aby unikać szybkich blokad (Rate Limit / Error 429).
-*   **Scrapowanie Użytkownika:** Automatycznie pobiera i zgłasza *wszystkie* ostatnie wiadomości wybranego użytkownika.
+*   **Scrapowanie Użytkownika:** Automatycznie pobiera i zgłasza do 1000+ wiadomości wybranego użytkownika dzięki inteligentnej paginacji.
 *   **Obsługa Wielu Tokenów:** Rotacja wieloma kontami dla maksymalnej efektywności.
 *   **Obsługa Proxy:** Zintegrowana rotacja proxy HTTP/HTTPS, aby zapobiec blokadom IP.
 *   **Logowanie:** Szczegółowe zapisywanie sukcesów i błędów do pliku `logs.txt`.
