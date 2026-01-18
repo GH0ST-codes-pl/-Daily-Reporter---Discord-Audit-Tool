@@ -206,4 +206,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
     ```
 
 ---
-© 2024 **GH0ST**. All rights reserved.
+© 2026 **GH0ST**. All rights reserved.
+
+<a href="https://tipply.pl/@daily-shoty"><img src="https://tipply.pl/images/logo.svg" height="40"></a>
+[Wsparcie (Tipply)](https://tipply.pl/@daily-shoty)
