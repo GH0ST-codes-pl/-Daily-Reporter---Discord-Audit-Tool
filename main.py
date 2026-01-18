@@ -114,25 +114,52 @@ class Main:
     def _scrape_messages(self, user_id, limit):
         print(f'{Colors.YELLOW}[*] Scraping messages...{Colors.RESET}')
         headers = {'Authorization': self.tokens[0], 'Content-Type': 'application/json'}
+        
+        all_messages = []
+        last_message_id = None
+        fetched = 0
+        
         try:
-            r = requests.get(
-                f'https://discord.com/api/v9/channels/{self.CHANNEL_ID}/messages?limit={limit}',
-                headers=headers
-            )
-            if r.status_code == 200:
-                messages = r.json()
-                count = 0
-                for msg in messages:
-                    if msg['author']['id'] == str(user_id):
-                        self.TARGETS.append(msg['id'])
-                        count += 1
-                print(f'{Colors.GREEN}[+] Found {count} messages from user.{Colors.RESET}')
-                if count == 0:
-                    print(f'{Colors.RED}[!] No messages found from this user in the last {limit} messages.{Colors.RESET}')
+            # Fetch in batches of 100 (Discord API limit)
+            while fetched < limit:
+                batch_size = min(100, limit - fetched)
+                url = f'https://discord.com/api/v9/channels/{self.CHANNEL_ID}/messages?limit={batch_size}'
+                if last_message_id:
+                    url += f'&before={last_message_id}'
+                
+                r = requests.get(url, headers=headers)
+                
+                if r.status_code == 200:
+                    messages = r.json()
+                    if not messages:  # No more messages
+                        break
+                    
+                    all_messages.extend(messages)
+                    fetched += len(messages)
+                    last_message_id = messages[-1]['id']
+                    
+                    print(f'{Colors.YELLOW}[*] Fetched {fetched}/{limit} messages...{Colors.RESET}')
+                    time.sleep(0.5)  # Rate limit protection
+                elif r.status_code == 429:
+                    wait = r.json().get('retry_after', 2)
+                    print(f'{Colors.YELLOW}[*] Rate limited, waiting {wait}s...{Colors.RESET}')
+                    time.sleep(float(wait))
+                else:
+                    print(f'{Colors.RED}[!] Failed to scrape: {r.status_code} {r.text}{Colors.RESET}')
                     os._exit(0)
-            else:
-                print(f'{Colors.RED}[!] Failed to scrape: {r.status_code} {r.text}{Colors.RESET}')
+            
+            # Filter messages from target user
+            count = 0
+            for msg in all_messages:
+                if msg['author']['id'] == str(user_id):
+                    self.TARGETS.append(msg['id'])
+                    count += 1
+            
+            print(f'{Colors.GREEN}[+] Found {count} messages from user in {fetched} total messages.{Colors.RESET}')
+            if count == 0:
+                print(f'{Colors.RED}[!] No messages found from this user in the last {fetched} messages.{Colors.RESET}')
                 os._exit(0)
+                
         except Exception as e:
             print(f'{Colors.RED}[!] Scrape error: {e}{Colors.RESET}')
             os._exit(0)
