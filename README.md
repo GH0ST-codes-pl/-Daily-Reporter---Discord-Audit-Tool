@@ -29,7 +29,6 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Smart Input:** Automatically extracts Channel/Message IDs from pasted URLs.
 *   **Colorful CLI:** Professional and easy-to-read interface.
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
-*   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
 *   **User Scraping:** Automatically fetch and report *all* recent messages from a target user.
 *   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
@@ -147,7 +146,7 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 ### 📥 Instalacja i Użycie
 
 #### 📱 Termux (Android)
-1.  Zaktualizuj [akiety i zainstaluj zależności:
+1.  Zaktualizuj pakiety i zainstaluj zależności:
     ```bash
     pkg update && pkg upgrade -y
     pkg install python git -y
