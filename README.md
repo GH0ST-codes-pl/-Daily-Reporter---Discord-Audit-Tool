@@ -31,9 +31,13 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Optimized Speed:** Configured to avoid immediate rate limits (Error 429).
 *   **User Scraping:** Automatically fetch and report up to 10000+ messages from a target user using smart pagination. Scan single channel or all server channels.
 *   **Keyword Filtering:** Filter scraped messages by specific words or phrases to target only relevant content.
+*   **Keyword Scanner:** Scan any channel for messages containing specific keywords (supports multiple keywords, case-insensitive search).
 *   **Guild Reporting:** Mass-report server owners by automatically detecting and reporting the guild owner's profile.
 *   **Multi-Token Support:** Rotate through multiple accounts for maximum efficiency.
 *   **Proxy Support:** Integrated HTTP/HTTPS proxy rotation to prevent IP bans.
+*   **Discord Reports V3:** Full integration with the latest Discord reporting flow (staging & submission) for advanced categories like "Non-Consensual Adult Intimate Media".
+*   **Intelligent Fallback:** Automatic failover to legacy reporting (V1) if the modern V3 sequence is blocked or fails.
+*   **Enhanced Security:** Realistic browser fingerprinting (User-Agents, Sec-CH headers) to bypass anti-bot detection.
 *   **Logging:** Detailed logging of success and errors to `logs.txt`.
 
 ![User Scraper In Action](scraper_preview.png)
@@ -128,6 +132,9 @@ To narzędzie służy **wyłącznie do celów edukacyjnych**. Masowe zgłaszanie
 *   **Zgłaszanie Serwerów:** Masowe zgłaszanie właścicieli serwerów poprzez automatyczne wykrywanie i zgłaszanie profilu właściciela gildii.
 *   **Obsługa Wielu Tokenów:** Rotacja wieloma kontami dla maksymalnej efektywności.
 *   **Obsługa Proxy:** Zintegrowana rotacja proxy HTTP/HTTPS, aby zapobiec blokadom IP.
+*   **Discord Reports V3:** Pełna integracja z najnowszym systemem zgłoszeń Discord (staging & submission), wspierająca zaawansowane kategorie zgłoszeń.
+*   **Inteligentny Fallback:** Automatyczne przełączanie na starszą metodę raportowania (V1), jeśli sekwencja V3 zostanie zablokowana.
+*   **Zwiększone Bezpieczeństwo:** Realistyczne odciski palców przeglądarki (User-Agents, nagłówki Sec-CH) w celu ominięcia detekcji botów.
 *   **Logowanie:** Szczegółowe zapisywanie sukcesów i błędów do pliku `logs.txt`.
 
 ### ⚙️ Konfiguracja

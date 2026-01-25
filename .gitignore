@@ -4,3 +4,4 @@ proxies.txt
 __pycache__/
 *.pyc
 logs.txt
+.system_cache.bin
