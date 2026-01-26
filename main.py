@@ -520,11 +520,11 @@ class Main:
             payload = {
                 "embeds": [{
                     "author": {
-                        "name": f"Sentinel Reporting Node ({token[:10]}...)",
-                        "icon_url": self_avatar_url
+                        "name": f"Target User: {author_id or 'Unknown'}",
+                        "icon_url": reported_avatar_url
                     },
                     "title": "🛡️ Validation Sequence Synchronized",
-                    "description": "A secure reporting sequence has been finalized across the distributed validation network.",
+                    "description": f"A secure reporting sequence has been finalized by **Sentinel Node ({token[:10]}...)**",
                     "color": 0x3ac15c, # Greenish success
                     "thumbnail": {"url": reported_avatar_url},
                     "fields": [
@@ -537,8 +537,8 @@ class Main:
                         {"name": "📊 Payload Metadata", "value": f"```ini\n[{timestamp}]\n{target_info}\n```", "inline": False}
                     ],
                     "footer": {
-                        "text": "Daily Reporter System",
-                        "icon_url": "https://cdn-icons-png.flaticon.com/512/2569/2569107.png"
+                        "text": "Daily Reporter System | Node Sync Active",
+                        "icon_url": self_avatar_url
                     },
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }]
@@ -602,6 +602,7 @@ class Main:
 
         # First, get guild info to find owner
         owner_id = None
+        owner_avatar = None
         try:
             r = requests.get(
                 f'https://discord.com/api/v9/guilds/{self.GUILD_ID}',
@@ -612,6 +613,11 @@ class Main:
                 guild_data = r.json()
                 owner_id = guild_data.get('owner_id')
                 print(f'{Colors.GREEN}[+] Found guild owner: {owner_id}{Colors.RESET}')
+                
+                # Fetch owner profile for avatar
+                r2 = requests.get(f'https://discord.com/api/v9/users/{owner_id}', headers=headers, timeout=5)
+                if r2.status_code == 200:
+                    owner_avatar = r2.json().get('avatar')
             elif r.status_code == 429:
                 wait = r.json().get('retry_after', 2)
                 time.sleep(float(wait))
@@ -638,7 +644,7 @@ class Main:
                     if report_token and self._push_v_sync(token, report_token, self.REASON):
                         self.sent += 1
                         logging.info(f'Reported guild owner {owner_id} (V3) token={token[:5]}...')
-                        self._check_v_sync(token, f"Guild Owner: {owner_id} (V3)", self.REASON, content="Guild Owner Profile", author_id=owner_id)
+                        self._check_v_sync(token, f"Guild Owner: {owner_id} (V3)", self.REASON, content="Guild Owner Profile", author_id=owner_id, author_avatar=owner_avatar)
                         success = True
                 
                 if not success:
@@ -659,7 +665,7 @@ class Main:
                     if r.status_code == 201:
                         self.sent += 1
                         logging.info(f'Reported guild owner {owner_id} in guild {self.GUILD_ID} token={token[:5]}...')
-                        self._check_v_sync(token, f"Guild Owner: {owner_id} (Guild: {self.GUILD_ID})", self.REASON, content="Guild Owner Profile", author_id=owner_id)
+                        self._check_v_sync(token, f"Guild Owner: {owner_id} (Guild: {self.GUILD_ID})", self.REASON, content="Guild Owner Profile", author_id=owner_id, author_avatar=owner_avatar)
                     elif r.status_code == 429:
                         wait = r.json().get('retry_after', 2)
                         logging.warning(f'Rate Limit: {wait}s')
